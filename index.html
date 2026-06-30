@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Energy Market France - papernest</title>
+<style>
+:root {
+  --pp: #5A52FF; --pp-l: #ECEAFF; --pp-d: #3D36CC;
+  --gr: #0FC4B2; --gr-l: #E7F9F7;
+  --ye: #FFB81D; --ye-l: #FFF7E8;
+  --pk: #FD6C93; --pk-l: #FFF0F4;
+  --bl: #4C89FF; --bl-l: #DBE7FF;
+  --rd: #DC2626; --rd-l: #FEF2F2;
+  --n1: #F7F7F9; --n2: #EEEFF2; --n4: #B0B3C0; --n6: #63697F; --n9: #111827;
+  --wh: #FFFFFF;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--n1);color:var(--n9);font-size:14px;line-height:1.6}
+
+.hdr{background:var(--pp);padding:24px 28px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:200}
+.hdr-logo{width:36px;height:36px;flex-shrink:0}
+.hdr-text{color:#fff}
+.hdr-title{font-size:18px;font-weight:800;letter-spacing:-.3px}
+.hdr-sub{font-size:12px;color:rgba(255,255,255,.65);margin-top:1px}
+
+.phase-bar{display:flex;background:var(--wh);border-bottom:1px solid var(--n2);position:sticky;top:84px;z-index:190;overflow-x:auto}
+.phase-tab{flex:1;min-width:130px;padding:14px 10px;text-align:center;cursor:pointer;border-bottom:3px solid transparent;transition:all .15s;font-family:inherit}
+.phase-tab:hover{background:var(--n1)}
+.phase-tab.on{border-bottom-color:var(--pp);background:var(--pp-l)}
+.phase-num{font-size:10px;font-weight:700;color:var(--n4);text-transform:uppercase;letter-spacing:.4px}
+.phase-tab.on .phase-num{color:var(--pp)}
+.phase-name{font-size:12.5px;font-weight:700;color:var(--n9);margin-top:2px}
+
+.main{max-width:880px;margin:0 auto;padding:28px 24px 80px}
+.phase-panel{display:none}
+.phase-panel.on{display:block}
+
+.intro{font-size:14.5px;color:var(--n6);margin-bottom:20px;line-height:1.7}
+.intro strong{color:var(--n9)}
+
+.sample-banner{display:flex;gap:10px;background:var(--ye-l);border-left:3px solid var(--ye);border-radius:9px;padding:12px 16px;margin-bottom:24px;font-size:12.5px;color:#7A5500;line-height:1.55}
+.sample-banner b{color:#7A5500}
+
+.section{margin-bottom:28px}
+.section-title{font-size:16px;font-weight:800;color:var(--n9);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.section-title .n{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:var(--pp);color:#fff;font-size:12px;font-weight:700;flex-shrink:0}
+
+.block{background:var(--wh);border-radius:14px;padding:20px 22px;margin-bottom:14px;border:1px solid var(--n2)}
+.block-title{font-size:14px;font-weight:700;color:var(--n9);margin-bottom:10px}
+.block-body{font-size:13.5px;color:var(--n6);line-height:1.65}
+.block-body b{color:var(--n9)}
+
+.criteria-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:14px 0}
+.criteria-item{background:var(--n1);border-radius:10px;padding:12px 14px;font-size:12.5px;color:var(--n9);display:flex;align-items:flex-start;gap:8px}
+.criteria-item .ic{flex-shrink:0;font-size:14px}
+
+/* Energy type sub-nav (electricity / gas) */
+.energy-subnav{display:flex;gap:8px;margin-bottom:18px}
+.esub-btn{flex:1;border:1.5px solid var(--n2);background:var(--wh);border-radius:11px;padding:12px 14px;cursor:pointer;font-family:inherit;text-align:left;transition:all .12s}
+.esub-btn:hover{border-color:var(--pp)}
+.esub-btn.on{border-color:var(--pp);background:var(--pp-l)}
+.esub-icon{font-size:18px;margin-bottom:4px}
+.esub-name{font-size:13.5px;font-weight:800;color:var(--n9)}
+.esub-tag{font-size:11px;color:var(--n6);margin-top:1px}
+.esub-group{display:none}
+.esub-group.on{display:block}
+
+/* Tariff structure cards (Base / HPHC / Tempo) */
+.tariff-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:14px 0}
+.tariff-card{border-radius:14px;padding:18px;border:2px solid transparent}
+.tc-base{background:var(--pp-l);border-color:var(--pp)}
+.tc-hphc{background:var(--gr-l);border-color:var(--gr)}
+.tc-tempo{background:var(--ye-l);border-color:var(--ye)}
+.tariff-name{font-size:14px;font-weight:800;margin-bottom:4px}
+.tc-base .tariff-name{color:var(--pp-d)}
+.tc-hphc .tariff-name{color:#0a6b64}
+.tc-tempo .tariff-name{color:#7A5500}
+.tariff-desc{font-size:12px;color:var(--n6);margin-bottom:10px;line-height:1.5}
+.tariff-includes{font-size:11.5px;color:var(--n9)}
+.tariff-includes div{padding:3px 0}
+
+/* Tempo day color selector */
+.tempo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0}
+.tempo-card{border-radius:12px;padding:16px;cursor:pointer;border:2px solid transparent;transition:all .12s}
+.tempo-card:hover{opacity:.9}
+.tempo-bleu{background:#DBE7FF}
+.tempo-blanc{background:#F0F0F0}
+.tempo-rouge{background:#FEE2E2}
+.tempo-card.on{border-color:var(--pp)}
+.tempo-day-count{font-size:22px;font-weight:800;color:var(--n9)}
+.tempo-day-label{font-size:11px;color:var(--n6);margin-top:2px}
+.tempo-name{font-size:13px;font-weight:800;margin-bottom:6px}
+.tempo-bleu .tempo-name{color:#1D5FCC}
+.tempo-blanc .tempo-name{color:#555}
+.tempo-rouge .tempo-name{color:#991B1B}
+.tempo-detail{margin-top:14px}
+
+/* PRVG profile selector */
+.tur-profile-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0}
+.tur-profile-card{border-radius:11px;padding:13px;border:1.5px solid var(--n2);background:var(--wh);cursor:pointer;text-align:center;transition:all .12s}
+.tur-profile-card:hover{border-color:var(--bl)}
+.tur-profile-card.on{border-color:var(--bl);background:var(--bl-l)}
+.tur-profile-name{font-size:12px;font-weight:700;color:var(--n9)}
+.tur-profile-range{font-size:10.5px;color:var(--n6);margin-top:2px}
+
+/* Historical charts */
+.chart-wrap{background:var(--wh);border-radius:14px;border:1px solid var(--n2);padding:20px;margin-bottom:16px;overflow-x:auto}
+.chart-svg-container{min-width:760px}
+.event-tooltip{position:fixed;background:var(--n9);color:#fff;border-radius:8px;padding:10px 13px;font-size:12px;max-width:260px;line-height:1.5;pointer-events:none;z-index:1000;display:none;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.event-tooltip b{display:block;margin-bottom:3px;color:var(--gr-l)}
+.chart-hint{font-size:11.5px;color:var(--n4);text-align:center;margin-top:8px}
+.chart-legend{display:flex;gap:14px;margin-bottom:10px;flex-wrap:wrap}
+.chart-legend-item{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--n6)}
+.chart-legend-dot{width:10px;height:10px;border-radius:3px}
+
+/* Tax/event timeline */
+.tax-timeline{display:flex;flex-direction:column;gap:0}
+.tax-step{display:flex;gap:14px;padding:10px 0;position:relative}
+.tax-step:not(:last-child)::before{content:'';position:absolute;left:13px;top:34px;bottom:-6px;width:2px;background:var(--n2)}
+.tax-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;z-index:1}
+.tax-content{flex:1;padding-top:2px}
+.tax-content b{display:block;font-size:13.5px;color:var(--n9);margin-bottom:2px}
+.tax-content span{font-size:12.5px;color:var(--n6);line-height:1.5}
+
+/* Concept cards */
+.concept-card{background:var(--wh);border-radius:11px;border:1px solid var(--n2);padding:13px 16px;margin-bottom:8px}
+.concept-term{font-size:13.5px;font-weight:700;color:var(--n9);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.concept-unit{font-size:10.5px;font-weight:600;color:var(--n4);background:var(--n1);border-radius:5px;padding:1px 6px}
+.concept-desc{font-size:12.5px;color:var(--n6);margin-top:5px;line-height:1.5}
+
+/* Aid scheme cards */
+.aid-grid{display:flex;flex-direction:column;gap:10px}
+.aid-card{background:var(--wh);border:1px solid var(--n2);border-radius:13px;padding:16px 18px}
+.aid-hdr{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.aid-badge{font-size:11px;font-weight:800;border-radius:7px;padding:4px 10px;flex-shrink:0;background:var(--gr-l);color:#0a6b64}
+.aid-name{font-size:14px;font-weight:800;color:var(--n9)}
+.aid-desc{font-size:12.5px;color:var(--n6);line-height:1.55}
+
+/* Source directory */
+.source-grid{display:flex;flex-direction:column;gap:10px}
+.source-card{background:var(--wh);border:1px solid var(--n2);border-radius:13px;padding:16px 18px}
+.source-hdr{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.source-badge{font-size:11px;font-weight:800;border-radius:7px;padding:4px 10px;flex-shrink:0}
+.source-publishes{font-size:12px;color:var(--n6);margin-bottom:10px;line-height:1.55}
+.source-examples{display:flex;flex-wrap:wrap;gap:6px}
+.source-ex-chip{background:var(--n1);border-radius:7px;padding:4px 10px;font-size:11px;color:var(--n9)}
+
+/* Bill breakdown TURPE */
+.breakdown-wrap{background:var(--wh);border-radius:14px;border:1px solid var(--n2);padding:20px 22px;margin-bottom:16px}
+.breakdown-bar{display:flex;height:46px;border-radius:8px;overflow:hidden;margin:14px 0}
+.bb-segment{display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;cursor:pointer;transition:opacity .15s}
+.bb-segment:hover{opacity:.85}
+.breakdown-legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+.bl-item{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--n6)}
+.bl-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+
+/* Seasonal calendar */
+.season-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0}
+.season-card{border-radius:11px;padding:14px}
+.sc-spring{background:var(--gr-l)}
+.sc-summer{background:var(--ye-l)}
+.sc-autumn{background:var(--pk-l)}
+.sc-winter{background:var(--bl-l)}
+.season-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px}
+.sc-spring .season-label{color:#0a6b64}
+.sc-summer .season-label{color:#7A5500}
+.sc-autumn .season-label{color:#9D174D}
+.sc-winter .season-label{color:#1D5FCC}
+.season-events{font-size:11.5px;color:var(--n9);line-height:1.6}
+
+.link-card{display:flex;align-items:center;gap:10px;background:var(--wh);border:1px solid var(--n2);border-radius:10px;padding:13px 16px;margin-bottom:10px;text-decoration:none;transition:all .12s}
+.link-card:hover{border-color:var(--pp);background:var(--pp-l)}
+.link-icon{font-size:17px;flex-shrink:0}
+.link-text{font-size:13px;color:var(--n9);font-weight:600}
+.link-text span{display:block;font-size:11.5px;color:var(--n6);font-weight:400;margin-top:1px}
+
+.excel-note{display:flex;gap:10px;background:var(--bl-l);border-left:3px solid var(--bl);border-radius:9px;padding:13px 16px;margin-top:16px;font-size:12.5px;color:#1D5FCC;line-height:1.55}
+.excel-note b{color:#1D5FCC}
+
+.example-box{display:flex;gap:8px;background:var(--bl-l);border-radius:8px;padding:11px 14px;margin-top:10px;font-size:12.5px;color:#1D5FCC}
+.example-box b{color:#1D5FCC}
+
+@media(max-width:640px){
+  .tariff-grid,.tempo-grid,.season-grid{grid-template-columns:1fr}
+  .tur-profile-grid{grid-template-columns:repeat(2,1fr)}
+  .energy-subnav{flex-direction:column}
+  .main{padding:20px 16px}
+}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <svg class="hdr-logo" viewBox="0 0 302 302" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="302" height="302" rx="151" fill="white" opacity="0.15"/>
+    <path d="M161.506 57.0209C128.584 57.0209 101.472 82.6075 99.2588 115.524C99.2588 116.216 99.2588 117.046 99.2588 117.737V231.84C99.2588 239.17 105.069 244.979 112.4 244.979C119.731 244.979 125.541 239.17 125.541 231.84V119.95C125.541 99.4809 142.417 83.299 162.198 83.299C181.978 83.299 198.854 100.172 198.854 119.95C198.854 139.728 181.978 156.463 162.198 156.463C154.866 156.463 149.056 162.272 149.056 169.602C149.056 176.932 154.866 182.741 162.198 182.741C195.811 182.741 225.136 154.25 225.136 119.812C225.136 85.3736 195.119 57.0209 161.506 57.0209Z" fill="white"/>
+  </svg>
+  <div class="hdr-text">
+    <div class="hdr-title">Energy Market - France</div>
+    <div class="hdr-sub">TRV, PRVG, TURPE, aids - the concepts behind every report</div>
+  </div>
+</div>
+
+<div class="phase-bar" id="phase-bar"></div>
+
+<div class="main">
+
+  <!-- ════════════════════════════════════════ -->
+  <!-- TAB 1: MARKET BASICS (electricity + gas) -->
+  <!-- ════════════════════════════════════════ -->
+  <div class="phase-panel on" id="panel-basics">
+    <div class="intro">Every report we write touches one of these prices somewhere. The French system has more moving parts than Spain's - three electricity pricing structures instead of one regulated tariff. <strong>This is conceptual learning, not a live data source</strong> - see the note at the end of each section for where real numbers live.</div>
+
+    <div class="energy-subnav">
+      <div class="esub-btn on" id="esub-elec" onclick="setEnergyType('elec')">
+        <div class="esub-icon">&#9889;</div>
+        <div class="esub-name">Electricity</div>
+        <div class="esub-tag">TRV - Base, HPHC, Tempo</div>
+      </div>
+      <div class="esub-btn" id="esub-gas" onclick="setEnergyType('gas')">
+        <div class="esub-icon">&#128293;</div>
+        <div class="esub-name">Gas</div>
+        <div class="esub-tag">PRVG - Cuisson, Chauffage</div>
+      </div>
+    </div>
+
+    <!-- ELECTRICITY GROUP -->
+    <div class="esub-group on" id="group-elec">
+      <div class="section">
+        <div class="section-title"><span class="n">1</span>TRV - three different pricing structures</div>
+        <div class="block-body" style="margin-bottom:12px">Unlike PVPC in Spain (one regulated tariff with hourly pricing), France's regulated TRV comes in <b>three structural options</b> a household chooses between when signing up. Same regulator, same underlying tariff, different time-of-use logic.</div>
+        <div class="tariff-grid">
+          <div class="tariff-card tc-base">
+            <div class="tariff-name">Base</div>
+            <div class="tariff-desc">One flat price per kWh, all day, every day. Simplest option, no behavioral optimization possible or needed.</div>
+            <div class="tariff-includes">
+              <div>&#9989; Single kWh rate</div>
+              <div>&#9989; Fixed annual subscription (by kVA)</div>
+            </div>
+          </div>
+          <div class="tariff-card tc-hphc">
+            <div class="tariff-name">HPHC</div>
+            <div class="tariff-desc">Heures Pleines / Heures Creuses - two rates, peak and off-peak, at fixed times of day set by the supplier/grid operator.</div>
+            <div class="tariff-includes">
+              <div>&#9989; HP rate (peak hours)</div>
+              <div>&#9989; HC rate (off-peak, cheaper)</div>
+            </div>
+          </div>
+          <div class="tariff-card tc-tempo">
+            <div class="tariff-name">Tempo</div>
+            <div class="tariff-desc">The most complex structure: each calendar day is colored Bleu, Blanc, or Rouge in advance, each with its own HP/HC rates. Rouge days are rare but expensive.</div>
+            <div class="tariff-includes">
+              <div>&#9989; 6 rate combinations (3 colors x HP/HC)</div>
+              <div>&#9989; Day color announced the evening before</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title"><span class="n">2</span>How Tempo actually works</div>
+        <div class="block-body" style="margin-bottom:12px">Every year is split into 300 Bleu days, 43 Blanc days, and 22 Rouge days. Click each color to see what it means in practice.</div>
+        <div class="tempo-grid">
+          <div class="tempo-card tempo-bleu on" data-color="bleu" onclick="setTempoColor('bleu')">
+            <div class="tempo-name">Bleu</div>
+            <div class="tempo-day-count">300</div>
+            <div class="tempo-day-label">days/year</div>
+          </div>
+          <div class="tempo-card tempo-blanc" data-color="blanc" onclick="setTempoColor('blanc')">
+            <div class="tempo-name">Blanc</div>
+            <div class="tempo-day-count">43</div>
+            <div class="tempo-day-label">days/year</div>
+          </div>
+          <div class="tempo-card tempo-rouge" data-color="rouge" onclick="setTempoColor('rouge')">
+            <div class="tempo-name">Rouge</div>
+            <div class="tempo-day-count">22</div>
+            <div class="tempo-day-label">days/year</div>
+          </div>
+        </div>
+        <div class="tempo-detail" id="tempo-detail"></div>
+      </div>
+
+      <div class="section">
+        <div class="section-title"><span class="n">3</span>What's inside the bill</div>
+        <div class="breakdown-wrap">
+          <div class="block-body">Same logic as PVPC in Spain: the regulated price bundles energy with network costs. In France, the network component has its own name and its own update cycle - <span class="bl-pvpc-note" style="display:inline-block;font-size:9px;font-weight:700;background:var(--n2);color:var(--n6);border-radius:4px;padding:1px 5px;margin-left:4px">TURPE</span>.</div>
+          <div class="breakdown-bar" id="breakdown-bar"></div>
+          <div class="breakdown-legend" id="breakdown-legend"></div>
+        </div>
+        <div class="block">
+          <div class="block-title">TURPE 7 - the network tariff</div>
+          <div class="block-body">TURPE (Tarif d'Utilisation des Réseaux Publics d'Électricité) is the fee for using the electricity grid - paid by every supplier and passed on to every household, regardless of which supplier or tariff structure they're on. Updated periodically (currently TURPE 7) and a recurring "what changes" report trigger on its own.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GAS GROUP -->
+    <div class="esub-group" id="group-gas">
+      <div class="section">
+        <div class="section-title"><span class="n">1</span>PRVG - the regulated gas reference price</div>
+        <div class="block">
+          <div class="block-body">PRVG (<b>Prix Repère du Gaz</b>) is the gas equivalent of TRV - published monthly by the CRE as a reference, not a tariff households must use (the regulated gas tariff itself was abolished in France; PRVG is now a benchmark suppliers' offers are compared against).</div>
+        </div>
+        <div class="block">
+          <div class="block-title">Two consumption profiles</div>
+          <div class="block-body"><b>B0 (Cuisson + Eau)</b> covers cooking and hot water only - lower annual consumption. <b>B1 (Chauffage)</b> adds gas heating on top - much higher annual consumption, and therefore a much larger bill impact when the price per kWh moves.</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title"><span class="n">2</span>Household profiles used in our models</div>
+        <div class="block-body" style="margin-bottom:0">Same logic as the Spanish TUR profiles - segmenting by use case turns "PRVG went up" into "what it means for someone like you".</div>
+        <div class="tur-profile-grid">
+          <div class="tur-profile-card on" data-profile="b0base" onclick="setPrvgProfile('b0base')">
+            <div class="tur-profile-name">Cuisson (Base)</div>
+            <div class="tur-profile-range">~800 kWh/an</div>
+          </div>
+          <div class="tur-profile-card" data-profile="b0" onclick="setPrvgProfile('b0')">
+            <div class="tur-profile-name">Cuisson + Eau (B0)</div>
+            <div class="tur-profile-range">~4,000 kWh/an</div>
+          </div>
+          <div class="tur-profile-card" data-profile="b1" onclick="setPrvgProfile('b1')">
+            <div class="tur-profile-name">+ Chauffage (B1)</div>
+            <div class="tur-profile-range">~11,200 kWh/an</div>
+          </div>
+          <div class="tur-profile-card" data-profile="b2i" onclick="setPrvgProfile('b2i')">
+            <div class="tur-profile-name">Chauffage fort (B2I)</div>
+            <div class="tur-profile-range">~70,000 kWh/an</div>
+          </div>
+        </div>
+        <div id="prvg-profile-detail"></div>
+      </div>
+
+      <div class="section">
+        <div class="section-title"><span class="n">3</span>PRVG price history (2013-2026)</div>
+        <div class="sample-banner" style="margin-bottom:14px"><span>&#9888;&#65039;</span><div><b>Real historical values</b> - annual average price, EUR/kWh, for Cuisson (B0) and Chauffage (B1). Confirm the current month's rate in the Excel models before publishing.</div></div>
+        <div class="chart-wrap">
+          <div class="chart-legend">
+            <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#5A52FF"></div>Cuisson + Eau (B0)</div>
+            <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#0FC4B2"></div>Chauffage (B1)</div>
+          </div>
+          <div id="prvg-chart-container"></div>
+          <div class="chart-hint">Hover any point for the exact yearly average</div>
+        </div>
+        <div class="block">
+          <div class="block-title">Reading the curve</div>
+          <div class="block-body">Notice the gap between Cuisson and Chauffage is fairly stable until 2021 - then both spike hard into the European gas crisis, peaking around <b>2025</b> at more than 0.14 EUR/kWh for Cuisson, before easing slightly into 2026. The Chauffage line is consistently lower per kWh, but remember: B1 households consume roughly 14x more than B0, so the bill impact runs the other way entirely - see Bill anatomy.</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title"><span class="n">4</span>ATRD 7 - the gas network tariff</div>
+        <div class="block-body">Same concept as TURPE, applied to gas distribution. ATRD (Accès des Tiers au Réseau de Distribution) is the fee for using the gas distribution network - currently in its 7th version, updated periodically like TURPE.</div>
+      </div>
+    </div>
+
+    <div class="excel-note"><b>For real, current figures:</b>&nbsp;TRV, PRVG, TURPE and ATRD rates update on their own schedules and shift with policy. This page teaches the structure - for actual calculations, use the dedicated Excel models (TRV tracker, PRVG tracker, French bill model, and the others from the Models project).</div>
+  </div>
+
+  <!-- ════════════════════════════════════════ -->
+  <!-- TAB 2: TAXES -->
+  <!-- ════════════════════════════════════════ -->
+  <div class="phase-panel" id="panel-taxes">
+    <div class="intro">VAT on energy is the headline tax lever in France, alongside the periodic network tariff updates (TURPE, ATRD) that aren't taxes exactly but function the same way in a report - a regulatory line item that moves the bill regardless of the wholesale price.</div>
+
+    <div class="sample-banner"><span>&#9888;&#65039;</span><div><b>Sample values for teaching only.</b> Tax and tariff rates change with policy and scheduled reviews - always confirm current rates in the Excel models before using a number in a report.</div></div>
+
+    <div class="section">
+      <div class="section-title"><span class="n">1</span>The recurring levers</div>
+      <div id="tax-concept-cards"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><span class="n">2</span>Why network tariffs matter as much as taxes</div>
+      <div class="block">
+        <div class="block-body">TURPE and ATRD aren't taxes, but they behave like one in a report: they're set by regulatory decision, updated on a schedule independent of wholesale prices, and they move every household's bill the same way taxes do. A TURPE 7 update is exactly as newsjacking-worthy as a VAT change.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════ -->
+  <!-- TAB 3: PRICE HISTORY -->
+  <!-- ════════════════════════════════════════ -->
+  <div class="phase-panel" id="panel-history">
+    <div class="intro">TRV electricity prices have moved dramatically since 2012, especially Base and HPHC structures during the 2022-2024 crisis years. <strong>Every spike here is a newsjacking opportunity we either caught or missed.</strong> Hover or tap any marker for the data point.</div>
+
+    <div class="sample-banner"><span>&#9888;&#65039;</span><div><b>Real historical values</b> - annual average price, EUR/kWh, Base 6kVA and HPHC 6kVA. For exact current rates, use the TRV tracker model.</div></div>
+
+    <div class="chart-wrap">
+      <div class="chart-legend">
+        <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#5A52FF"></div>Base 6kVA</div>
+        <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#0FC4B2"></div>HPHC 6kVA</div>
+        <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#FFB81D"></div>Tempo 9kVA</div>
+      </div>
+      <div class="chart-svg-container" id="chart-container"></div>
+      <div class="chart-hint">Hover over a point to see the exact rate that year</div>
+    </div>
+    <div class="event-tooltip" id="event-tooltip"></div>
+
+    <div class="block" style="margin-top:16px">
+      <div class="block-title">Reading the curve</div>
+      <div class="block-body">2023-2024 shows the sharpest move in the dataset: Base 6kVA jumps <b>+24.7%</b> in 2023 then another <b>+16.0%</b> in 2024, before correcting <b>-21.1%</b> in 2025 as the crisis eased and relief measures landed. Tempo behaves differently - it actually dropped in 2022 (-15.1%) while Base and HPHC were climbing, because Tempo's pricing model responds to a different mix of signals.</div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════ -->
+  <!-- TAB 4: BILL ANATOMY -->
+  <!-- ════════════════════════════════════════ -->
+  <div class="phase-panel" id="panel-bill">
+    <div class="intro">Two concepts explain most reader confusion about French energy bills: why network tariffs (TURPE/ATRD) don't move with wholesale prices, and why a small per-kWh difference in PRVG profiles produces a huge euro gap once you multiply by real consumption.</div>
+
+    <div class="sample-banner"><span>&#9888;&#65039;</span><div><b>Illustrative proportions, not your actual bill.</b> For real bill modeling, use the French electricity and gas bill Excel models.</div></div>
+
+    <div class="section">
+      <div class="section-title"><span class="n">1</span>Why consumption profile matters more than price per kWh</div>
+      <div class="block-body" style="margin-bottom:14px">This is the single most useful concept for writing PRVG reports. Chauffage (B1) has a <i>lower</i> price per kWh than Cuisson (B0) - but consumes roughly 14x more energy. The bill impact runs entirely in the opposite direction of the per-kWh price.</div>
+      <div class="criteria-grid">
+        <div class="block" style="margin-bottom:0">
+          <div class="block-title">Cuisson + Eau (B0)</div>
+          <div class="block-body">Lower annual consumption (~4,000 kWh), higher price per kWh. Small absolute bill, but the percentage swing from a price change is very visible.</div>
+        </div>
+        <div class="block" style="margin-bottom:0">
+          <div class="block-title">Chauffage (B1)</div>
+          <div class="block-body">Higher annual consumption (~11,200 kWh), lower price per kWh. Same percentage price change produces a far larger euro impact on the bill.</div>
+        </div>
+      </div>
+      <div class="example-box"><b>Report angle:</b>&nbsp;"PRVG rises just 0.7% for Chauffage households - but that's worth 3x more in euros than the same percentage for a Cuisson-only home." The consumption multiplier is the story, not just the price.</div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><span class="n">2</span>Why TURPE/ATRD changes are a story on their own</div>
+      <div class="block-body">When TURPE or ATRD updates, the wholesale energy price hasn't necessarily moved at all - it's a pure regulatory shift, fully separate from PRVG or wholesale electricity prices. This is what makes "TURPE 7: what it means for your bill" a clean, self-contained report that doesn't need any market drama to justify itself.</div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════ -->
+  <!-- TAB 5: AIDS & SCHEMES -->
+  <!-- ════════════════════════════════════════ -->
+  <div class="phase-panel" id="panel-aids">
+    <div class="intro">France has more active household energy aid schemes than Spain's single Bono Social - and most are under-used, which is itself a recurring report angle.</div>
+
+    <div class="sample-banner"><span>&#9888;&#65039;</span><div><b>Sample eligibility and amounts.</b> Aid scheme rules, amounts, and deadlines change yearly with the budget - confirm current figures before publishing.</div></div>
+
+    <div class="section">
+      <div class="section-title"><span class="n">1</span>The main schemes</div>
+      <div class="aid-grid">
+        <div class="aid-card">
+          <div class="aid-hdr"><span class="aid-badge">Chèque Énergie</span></div>
+          <div class="aid-desc">The direct equivalent of Spain's Bono Social - an annual payment for low-income households, sent automatically (no application needed if eligible based on tax declaration) and usable for any energy bill or certain renovation works. Distributed in batches, typically arriving around <b>November</b>.</div>
+        </div>
+        <div class="aid-card">
+          <div class="aid-hdr"><span class="aid-badge">MaPrimeRénov</span></div>
+          <div class="aid-desc">A renovation subsidy for insulation, heating system upgrades, and other energy efficiency works. Amount depends on income bracket and the specific work done. Rules get updated periodically - "what changed this month" is a recurring, reliable report format.</div>
+        </div>
+        <div class="aid-card">
+          <div class="aid-hdr"><span class="aid-badge">CEE (Certificats d'Économies d'Énergie)</span></div>
+          <div class="aid-desc">A scheme requiring energy suppliers to fund efficiency works for customers - in practice, often stacked on top of MaPrimeRénov. Consistently flagged as under-utilized by households who don't realize they qualify.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><span class="n">2</span>Tax credits and declarations</div>
+      <div class="block-body">Energy renovation costs (MaPrimeRénov-adjacent works, CEE-funded works) can interact with the annual tax declaration period - a reliable seasonal trigger for a reminder-style report each spring.</div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════ -->
+  <!-- TAB 6: DATA SOURCES & CALENDAR -->
+  <!-- ════════════════════════════════════════ -->
+  <div class="phase-panel" id="panel-sources">
+    <div class="intro">Knowing <strong>who publishes what, and when the recurring calendar moments are</strong>, is what lets you go from "I have an idea" to "I have a number" in minutes instead of hours.</div>
+
+    <div class="section">
+      <div class="section-title"><span class="n">1</span>The official sources</div>
+      <div class="source-grid" id="source-grid"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><span class="n">2</span>Recurring monthly format</div>
+      <div class="block">
+        <div class="block-title">&#128203; "Ce qui change" - monthly regulatory roundup</div>
+        <div class="block-body">A monthly format unique to the French market: every change taking effect on the 1st of the month (TRV, PRVG, aids, tariffs) rolled into one piece. Estimated impact per household, winners vs losers, practical switching advice.</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><span class="n">3</span>Seasonal and calendar triggers</div>
+      <div class="block-body" style="margin-bottom:12px">The French market has a denser seasonal calendar than Spain's - moving season, clock changes, and cultural moments all double as report triggers.</div>
+      <div class="season-grid">
+        <div class="season-card sc-spring">
+          <div class="season-label">Spring</div>
+          <div class="season-events">Clock change (off-peak hours shift)<br>Tax declaration period<br>Earth Day city rankings</div>
+        </div>
+        <div class="season-card sc-summer">
+          <div class="season-label">Summer</div>
+          <div class="season-events">Peak moving month (August)<br>Canicule / AC bill spike<br>Holiday standby waste</div>
+        </div>
+        <div class="season-card sc-autumn">
+          <div class="season-label">Autumn</div>
+          <div class="season-events">Back-to-school moving season<br>Clock change (winter heating)<br>Chèque Énergie distribution</div>
+        </div>
+        <div class="season-card sc-winter">
+          <div class="season-label">Winter</div>
+          <div class="season-events">Heating &amp; insulation season<br>Winter holidays standby waste<br>New-year tariff updates</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><span class="n">4</span>Trigger-based reports (react fast)</div>
+      <div class="block-body" style="margin-bottom:12px">See the Newsjacking strategy in Full Campaign Flow for how to execute these.</div>
+      <div class="criteria-grid">
+        <div class="criteria-item"><span class="ic">&#9889;</span><span><b>TRV update</b> - household impact + free market comparison</span></div>
+        <div class="criteria-item"><span class="ic">&#128293;</span><span><b>PRVG monthly update</b> - compare with European TTF gas price</span></div>
+        <div class="criteria-item"><span class="ic">&#128737;&#65039;</span><span><b>VAT change</b> - EUR/month impact vs European VAT rates</span></div>
+        <div class="criteria-item"><span class="ic">&#127765;</span><span><b>TURPE/ATRD update</b> - bill breakdown impact</span></div>
+        <div class="criteria-item"><span class="ic">&#128197;</span><span><b>Heures Creuses reform</b> - new time slots + smart meter tips</span></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────
+// TAB NAVIGATION
+// ─────────────────────────────────────────────────────────────
+const TABS = [
+  { id: "basics", label: "Market basics" },
+  { id: "taxes", label: "Taxes & tariffs" },
+  { id: "history", label: "Price history" },
+  { id: "bill", label: "Bill anatomy" },
+  { id: "aids", label: "Aids & schemes" },
+  { id: "sources", label: "Sources & calendar" }
+];
+
+let activeTab = "basics";
+
+function renderTabBar() {
+  const bar = document.getElementById("phase-bar");
+  bar.innerHTML = TABS.map((p, i) =>
+    `<div class="phase-tab ${p.id===activeTab?'on':''}" onclick="setTab('${p.id}')">
+      <div class="phase-num">Tab ${i+1}</div>
+      <div class="phase-name">${p.label}</div>
+    </div>`
+  ).join("");
+}
+
+function setTab(id) {
+  activeTab = id;
+  renderTabBar();
+  document.querySelectorAll(".phase-panel").forEach(p => p.classList.toggle("on", p.id === "panel-" + id));
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+renderTabBar();
+
+// ─────────────────────────────────────────────────────────────
+// ELECTRICITY / GAS SUB-NAV
+// ─────────────────────────────────────────────────────────────
+function setEnergyType(type) {
+  document.getElementById("esub-elec").classList.toggle("on", type === "elec");
+  document.getElementById("esub-gas").classList.toggle("on", type === "gas");
+  document.getElementById("group-elec").classList.toggle("on", type === "elec");
+  document.getElementById("group-gas").classList.toggle("on", type === "gas");
+  if (type === "gas") renderPrvgChart();
+}
+
+// ─────────────────────────────────────────────────────────────
+// TEMPO COLOR DETAIL
+// ─────────────────────────────────────────────────────────────
+const TEMPO_INFO = {
+  bleu: { name: "Bleu", days: "300 days/year", desc: "The default day type, used most of the year. HP and HC rates on Bleu days are the cheapest of the three colors - this is the baseline most Tempo customers experience almost all year.", when: "Most days, all seasons" },
+  blanc: { name: "Blanc", days: "43 days/year", desc: "An intermediate day, typically triggered by moderately high demand (cold but not extreme). Rates sit between Bleu and Rouge.", when: "Cooler periods, moderate grid stress" },
+  rouge: { name: "Rouge", days: "22 days/year", desc: "The most expensive day type, reserved for the highest-demand days of the year - almost always in winter, often tied to a cold spell. Households on Tempo are notified the evening before so they can shift consumption.", when: "Coldest winter days, max grid stress (typically Nov-Mar)" }
+};
+
+function setTempoColor(color) {
+  document.querySelectorAll(".tempo-card").forEach(c => c.classList.toggle("on", c.dataset.color === color));
+  const t = TEMPO_INFO[color];
+  document.getElementById("tempo-detail").innerHTML = `
+    <div class="block">
+      <div class="block-title">${t.name} days - ${t.days}</div>
+      <div class="block-body">${t.desc}<br><b>Typically occurs:</b> ${t.when}</div>
+    </div>`;
+}
+setTempoColor("bleu");
+
+// ─────────────────────────────────────────────────────────────
+// TURPE BREAKDOWN BAR
+// ─────────────────────────────────────────────────────────────
+const BREAKDOWN = [
+  { label: "Energy (supply)", pct: 40, color: "#5A52FF" },
+  { label: "TURPE (network)", pct: 30, color: "#0FC4B2" },
+  { label: "Taxes (TVA + CTA)", pct: 20, color: "#4C89FF" },
+  { label: "Subscription (abonnement)", pct: 10, color: "#FD6C93" }
+];
+
+function renderBreakdown() {
+  const bar = document.getElementById("breakdown-bar");
+  bar.innerHTML = BREAKDOWN.map(b =>
+    `<div class="bb-segment" style="width:${b.pct}%;background:${b.color}" title="${b.label}: ${b.pct}%">${b.pct}%</div>`
+  ).join("");
+  const legend = document.getElementById("breakdown-legend");
+  legend.innerHTML = BREAKDOWN.map(b =>
+    `<div class="bl-item"><div class="bl-dot" style="background:${b.color}"></div>${b.label}</div>`
+  ).join("");
+}
+renderBreakdown();
+
+// ─────────────────────────────────────────────────────────────
+// PRVG PROFILES
+// ─────────────────────────────────────────────────────────────
+const PRVG_PROFILES = {
+  b0base: { name: "Cuisson (Base)", desc: "Cooking only, no hot water or heating from gas. The smallest gas consumption profile.", annual: "~800 kWh/an" },
+  b0: { name: "Cuisson + Eau (B0)", desc: "Cooking plus hot water heating. The standard small-household gas profile, no central heating.", annual: "~4,000 kWh/an" },
+  b1: { name: "Cuisson + Eau + Chauffage (B1)", desc: "Adds gas central heating on top of cooking and hot water - a full-sized family home.", annual: "~11,200 kWh/an" },
+  b2i: { name: "Chauffage fort (B2I)", desc: "Large-scale heating consumption, typically larger or less insulated properties, or small collective heating systems.", annual: "~70,000 kWh/an" }
+};
+
+function setPrvgProfile(id) {
+  document.querySelectorAll(".tur-profile-card").forEach(c => c.classList.toggle("on", c.dataset.profile === id));
+  const p = PRVG_PROFILES[id];
+  document.getElementById("prvg-profile-detail").innerHTML = `
+    <div class="block" style="margin-top:12px">
+      <div class="block-title">${p.name}</div>
+      <div class="block-body">${p.desc}<br><b>Typical annual gas consumption:</b> ${p.annual}</div>
+    </div>`;
+}
+setPrvgProfile("b0base");
+
+// ─────────────────────────────────────────────────────────────
+// PRVG HISTORY CHART (annual, 2013-2026)
+// ─────────────────────────────────────────────────────────────
+const PRVG_HISTORY = [
+  {yr:"2013",cuisson:0.08658,chauffage:0.05876},
+  {yr:"2014",cuisson:0.08448,chauffage:0.05731},
+  {yr:"2015",cuisson:0.07928,chauffage:0.05523},
+  {yr:"2016",cuisson:0.07080,chauffage:0.04903},
+  {yr:"2017",cuisson:0.07321,chauffage:0.05234},
+  {yr:"2018",cuisson:0.08091,chauffage:0.06026},
+  {yr:"2019",cuisson:0.08155,chauffage:0.06006},
+  {yr:"2020",cuisson:0.07283,chauffage:0.05008},
+  {yr:"2021",cuisson:0.09138,chauffage:0.06803},
+  {yr:"2022",cuisson:0.11210,chauffage:0.08870},
+  {yr:"2023",cuisson:0.11993,chauffage:0.09690},
+  {yr:"2024",cuisson:0.12662,chauffage:0.10110},
+  {yr:"2025",cuisson:0.14178,chauffage:0.11171},
+  {yr:"2026",cuisson:0.14267,chauffage:0.11174}
+];
+
+function renderPrvgChart() {
+  const container = document.getElementById("prvg-chart-container");
+  if (!container || container.dataset.rendered) return;
+  const w = 700, h = 240;
+  const padL = 50, padR = 20, padT = 20, padB = 30;
+  const plotW = w - padL - padR;
+  const plotH = h - padT - padB;
+  const maxV = 0.16;
+
+  function toPts(key) {
+    return PRVG_HISTORY.map((d, i) => {
+      const x = padL + (i / (PRVG_HISTORY.length - 1)) * plotW;
+      const y = padT + plotH - (d[key] / maxV) * plotH;
+      return { x, y, ...d };
+    });
+  }
+  const pts1 = toPts("cuisson");
+  const pts2 = toPts("chauffage");
+
+  const path1 = pts1.map((p,i) => (i===0?"M":"L") + p.x.toFixed(1) + "," + p.y.toFixed(1)).join(" ");
+  const path2 = pts2.map((p,i) => (i===0?"M":"L") + p.x.toFixed(1) + "," + p.y.toFixed(1)).join(" ");
+
+  let gridLines = "";
+  for (let v = 0; v <= maxV; v += 0.04) {
+    const y = padT + plotH - (v / maxV) * plotH;
+    gridLines += `<line x1="${padL}" y1="${y}" x2="${w-padR}" y2="${y}" stroke="#EEEFF2" stroke-width="1"/>`;
+    gridLines += `<text x="${padL-8}" y="${y+4}" font-size="9" fill="#B0B3C0" text-anchor="end">${v.toFixed(2)}</text>`;
+  }
+
+  let xLabels = "";
+  pts1.forEach((p) => { xLabels += `<text x="${p.x}" y="${h-8}" font-size="9" fill="#B0B3C0" text-anchor="middle">${p.yr}</text>`; });
+
+  let markers1 = "", markers2 = "";
+  pts1.forEach((p,i) => { markers1 += `<circle cx="${p.x}" cy="${p.y}" r="3.5" fill="#5A52FF" stroke="#fff" stroke-width="1" class="prvg-marker" data-idx="${i}" data-series="cuisson" style="cursor:pointer"/>`; });
+  pts2.forEach((p,i) => { markers2 += `<circle cx="${p.x}" cy="${p.y}" r="3.5" fill="#0FC4B2" stroke="#fff" stroke-width="1" class="prvg-marker" data-idx="${i}" data-series="chauffage" style="cursor:pointer"/>`; });
+
+  container.innerHTML = `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+    ${gridLines}
+    <path d="${path1}" fill="none" stroke="#5A52FF" stroke-width="2"/>
+    <path d="${path2}" fill="none" stroke="#0FC4B2" stroke-width="2"/>
+    ${markers1}${markers2}
+    ${xLabels}
+  </svg>`;
+  container.dataset.rendered = "1";
+
+  const tooltip = document.getElementById("event-tooltip");
+  container.querySelectorAll(".prvg-marker").forEach(el => {
+    el.addEventListener("mouseenter", (ev) => {
+      const idx = +el.dataset.idx;
+      const series = el.dataset.series;
+      const d = PRVG_HISTORY[idx];
+      const label = series === "cuisson" ? "Cuisson (B0)" : "Chauffage (B1)";
+      tooltip.innerHTML = `<b>${d.yr} - ${label}</b>${d[series].toFixed(5)} EUR/kWh`;
+      tooltip.style.display = "block";
+      tooltip.style.left = (ev.clientX + 14) + "px";
+      tooltip.style.top = (ev.clientY - 10) + "px";
+    });
+    el.addEventListener("mousemove", (ev) => {
+      tooltip.style.left = (ev.clientX + 14) + "px";
+      tooltip.style.top = (ev.clientY - 10) + "px";
+    });
+    el.addEventListener("mouseleave", () => { tooltip.style.display = "none"; });
+  });
+}
+
+// ─────────────────────────────────────────────────────────────
+// TAX/TARIFF CONCEPT CARDS
+// ─────────────────────────────────────────────────────────────
+const TAX_CONCEPTS = [
+  { term: "TVA - electricity & gas", unit: "%", desc: "Value-added tax on the energy bill, similar role to Spain's IVA. Rate changes are a recurring report trigger when announced." },
+  { term: "TURPE - network tariff (electricity)", unit: "€/kWh + €/an", desc: "Tarif d'Utilisation des Réseaux Publics d'Électricité. The fee for using the grid, set independently of wholesale prices, updated periodically (currently TURPE 7)." },
+  { term: "ATRD - network tariff (gas)", unit: "€/kWh + €/an", desc: "Same role as TURPE, for gas distribution networks. Currently in its 7th version (ATRD 7)." },
+  { term: "CTA - Contribution Tarifaire d'Acheminement", unit: "%", desc: "A contribution applied to the network (subscription) portion of the bill, funding pension obligations in the energy sector." }
+];
+
+document.getElementById("tax-concept-cards").innerHTML = TAX_CONCEPTS.map(c => `
+  <div class="concept-card">
+    <div class="concept-term">${c.term} <span class="concept-unit">${c.unit}</span></div>
+    <div class="concept-desc">${c.desc}</div>
+  </div>`).join("");
+
+// ─────────────────────────────────────────────────────────────
+// PRICE HISTORY CHART (TRV electricity, annual 2012-2026)
+// ─────────────────────────────────────────────────────────────
+const HISTORY = [
+  {yr:"2012",base:0.12630,hphc:0.12501,tempo:null,e:"First year in this dataset."},
+  {yr:"2013",base:0.13290,hphc:0.13129,tempo:null,e:"+5.2% Base. Steady early rise."},
+  {yr:"2014",base:0.14010,hphc:0.13759,tempo:null,e:"+5.4% Base. Continued increase."},
+  {yr:"2015",base:0.14370,hphc:0.14366,tempo:null,e:"+2.6% Base. Slower growth."},
+  {yr:"2016",base:0.15030,hphc:0.14643,tempo:0.14343,e:"Tempo 9kVA enters the dataset."},
+  {yr:"2017",base:0.14660,hphc:0.14805,tempo:0.14717,e:"-2.5% Base - a rare yearly decrease."},
+  {yr:"2018",base:0.14585,hphc:0.14707,tempo:0.14569,e:"Broadly flat year."},
+  {yr:"2019",base:0.15275,hphc:0.15788,tempo:0.15769,e:"+4.7% Base. Renewed upward pressure."},
+  {yr:"2020",base:0.15515,hphc:0.16413,tempo:0.16627,e:"COVID year. Modest continued rise."},
+  {yr:"2021",base:0.15700,hphc:0.16784,tempo:0.16397,e:"Early gas crisis tension building in Europe."},
+  {yr:"2022",base:0.17400,hphc:0.17186,tempo:0.13915,e:"+10.8% Base, but Tempo drops -15.1% - different pricing dynamics."},
+  {yr:"2023",base:0.21690,hphc:0.21386,tempo:0.14734,e:"+24.7% Base. The sharpest single-year jump in the dataset."},
+  {yr:"2024",base:0.25160,hphc:0.24914,tempo:0.17792,e:"+16.0% Base. Crisis peak year."},
+  {yr:"2025",base:0.19840,hphc:0.19657,tempo:0.16658,e:"-21.1% Base. Sharp correction as crisis eased."},
+  {yr:"2026",base:0.19398,hphc:0.19043,tempo:0.17674,e:"-2.2% Base, but Tempo +6.1% - structures diverging again."}
+];
+
+function renderHistoryChart() {
+  const container = document.getElementById("chart-container");
+  const tooltip = document.getElementById("event-tooltip");
+  const w = 720, h = 280;
+  const padL = 45, padR = 20, padT = 20, padB = 30;
+  const plotW = w - padL - padR;
+  const plotH = h - padT - padB;
+  const maxV = 0.28;
+
+  function toPts(key) {
+    return HISTORY.map((d, i) => {
+      const x = padL + (i / (HISTORY.length - 1)) * plotW;
+      const val = d[key];
+      const y = val === null ? null : padT + plotH - (val / maxV) * plotH;
+      return { x, y, ...d };
+    });
+  }
+  const ptsBase = toPts("base");
+  const ptsHphc = toPts("hphc");
+  const ptsTempo = toPts("tempo").filter(p => p.y !== null);
+
+  const pathBase = ptsBase.map((p,i) => (i===0?"M":"L") + p.x.toFixed(1) + "," + p.y.toFixed(1)).join(" ");
+  const pathHphc = ptsHphc.map((p,i) => (i===0?"M":"L") + p.x.toFixed(1) + "," + p.y.toFixed(1)).join(" ");
+  const pathTempo = ptsTempo.map((p,i) => (i===0?"M":"L") + p.x.toFixed(1) + "," + p.y.toFixed(1)).join(" ");
+
+  let gridLines = "";
+  for (let v = 0; v <= maxV; v += 0.04) {
+    const y = padT + plotH - (v / maxV) * plotH;
+    gridLines += `<line x1="${padL}" y1="${y}" x2="${w-padR}" y2="${y}" stroke="#EEEFF2" stroke-width="1"/>`;
+    gridLines += `<text x="${padL-8}" y="${y+4}" font-size="9" fill="#B0B3C0" text-anchor="end">${v.toFixed(2)}</text>`;
+  }
+
+  let xLabels = "";
+  ptsBase.forEach((p) => { xLabels += `<text x="${p.x}" y="${h-8}" font-size="9" fill="#B0B3C0" text-anchor="middle">${p.yr}</text>`; });
+
+  let markersBase = "", markersHphc = "", markersTempo = "";
+  ptsBase.forEach((p,i) => { markersBase += `<circle cx="${p.x}" cy="${p.y}" r="3.5" fill="#5A52FF" stroke="#fff" stroke-width="1" class="hist-marker" data-idx="${i}" style="cursor:pointer"/>`; });
+  ptsHphc.forEach((p,i) => { markersHphc += `<circle cx="${p.x}" cy="${p.y}" r="3" fill="#0FC4B2" stroke="#fff" stroke-width="1"/>`; });
+  ptsTempo.forEach((p,i) => { markersTempo += `<circle cx="${p.x}" cy="${p.y}" r="3" fill="#FFB81D" stroke="#fff" stroke-width="1"/>`; });
+
+  container.innerHTML = `
+    <svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+      ${gridLines}
+      <path d="${pathBase}" fill="none" stroke="#5A52FF" stroke-width="2"/>
+      <path d="${pathHphc}" fill="none" stroke="#0FC4B2" stroke-width="2"/>
+      <path d="${pathTempo}" fill="none" stroke="#FFB81D" stroke-width="2" stroke-dasharray="4,3"/>
+      ${markersHphc}${markersTempo}${markersBase}
+      ${xLabels}
+    </svg>`;
+
+  container.querySelectorAll(".hist-marker").forEach(el => {
+    el.addEventListener("mouseenter", (ev) => {
+      const idx = +el.dataset.idx;
+      const d = HISTORY[idx];
+      tooltip.innerHTML = `<b>${d.yr} - Base ${d.base.toFixed(4)} EUR/kWh</b>${d.e}`;
+      tooltip.style.display = "block";
+      positionTooltip(ev);
+    });
+    el.addEventListener("mousemove", positionTooltip);
+    el.addEventListener("mouseleave", () => { tooltip.style.display = "none"; });
+    el.addEventListener("click", (ev) => {
+      const idx = +el.dataset.idx;
+      const d = HISTORY[idx];
+      tooltip.innerHTML = `<b>${d.yr} - Base ${d.base.toFixed(4)} EUR/kWh</b>${d.e}`;
+      tooltip.style.display = "block";
+      positionTooltip(ev);
+      setTimeout(() => { tooltip.style.display = "none"; }, 3000);
+    });
+  });
+
+  function positionTooltip(ev) {
+    tooltip.style.left = (ev.clientX + 14) + "px";
+    tooltip.style.top = (ev.clientY - 10) + "px";
+  }
+}
+renderHistoryChart();
+
+// ─────────────────────────────────────────────────────────────
+// DATA SOURCES DIRECTORY
+// ─────────────────────────────────────────────────────────────
+const SOURCES = [
+  { name: "CRE", color: "pp", publishes: "Commission de Régulation de l'Énergie - the energy regulator. Publishes TRV electricity updates, the monthly PRVG gas reference price, and the TURPE/ATRD network tariff reviews.", examples: ["TRV updates", "PRVG monthly price", "TURPE/ATRD reviews"] },
+  { name: "RTE", color: "gr", publishes: "The electricity grid operator (France's equivalent of REE). Publishes real-time and historical electricity demand, generation mix, and system data.", examples: ["Demand data", "Generation mix", "Grid stress events (Tempo triggers)"] },
+  { name: "SDES", color: "ye", publishes: "Service des Données et Études Statistiques - the energy ministry's statistics service. Publishes monthly energy consumption data and annual regional consumption breakdowns.", examples: ["Monthly energy data", "Regional consumption", "Renewables share"] },
+  { name: "INSEE", color: "pk", publishes: "The national statistics institute (France's equivalent of INE). Publishes the CPI energy component and household budget data relevant to energy spend.", examples: ["Energy CPI", "Household budget surveys"] }
+];
+
+document.getElementById("source-grid").innerHTML = SOURCES.map(s => `
+  <div class="source-card">
+    <div class="source-hdr">
+      <span class="source-badge" style="background:var(--${s.color}-l);color:var(--n9)">${s.name}</span>
+    </div>
+    <div class="source-publishes">${s.publishes}</div>
+    <div class="source-examples">${s.examples.map(e => `<span class="source-ex-chip">${e}</span>`).join("")}</div>
+  </div>`).join("");
+
+// Ensure correct initial panel visibility
+document.querySelectorAll(".phase-panel").forEach(p => {
+  p.classList.toggle("on", p.id === "panel-" + activeTab);
+});
+</script>
+
+</body>
+</html>
